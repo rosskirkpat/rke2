@@ -104,7 +104,8 @@ This will require a reboot for the `Containers` feature to properly function.
 
 #### 1. Download the Install Script
 ```powershell
-Invoke-WebRequest ((New-Object System.Net.WebClient).DownloadString('https://github.com/rancher/rke2/blob/release-1.21/install.ps1'))
+$ProgressPreference = 'SilentlyContinue'
+Invoke-WebRequest -URI https://raw.githubusercontent.com/rancher/rke2/master/install.ps1 -Outfile install.ps1
 ```
 This will download the `rke2.exe` Windows binary onto your machine.
 

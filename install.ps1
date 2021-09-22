@@ -15,7 +15,7 @@
 .Parameter Version
     Version of rke2 to download from github.`
 .Parameter TarPrefix
-    Installation prefix when using the tar installation method.
+    Installation prefix when using the tar installation method. This needs to match the value of CATTLE_AGENT_BIN_PREFIX
     Default is C:/usr/local, unless C:/usr/local is read-only or has a dedicated mount point,
     in which case C:/opt/rke2 is used instead.`
 .Parameter Commit
@@ -23,7 +23,7 @@
     If set, this forces Method=tar.
     * (for developer & QA use only)`
 .Parameter AgentImagesDir
-    Installation path for airgap images when installing from CI commit
+    Installation path for airgap images when installing from CI commit.
     Default is C:/var/lib/rancher/rke2/agent/images`
 .Parameter ArtifactPath
     If set, the install script will use the local path for sourcing the rke2.windows-$SUFFIX and sha256sum-$ARCH.txt files
@@ -40,10 +40,10 @@
 .EXAMPLE
   Usage:
     Invoke-WebRequest ((New-Object System.Net.WebClient).DownloadString('https://github.com/rancher/rke2/blob/master/install.ps1'))
-    ./install.ps1 -Channel Latest -Mehtod Tar
+    ./install.ps1 -Channel Latest -Method Tar
 #>
 
-    [CmdletBinding()]
+[CmdletBinding()]
 param (
     [Parameter()]
     [String]
@@ -61,7 +61,7 @@ param (
     $Version,
     [Parameter()]
     [String]
-    $TarPrefix = "C:\usr\local",
+    $TarPrefix = "C:/usr/local",
     [Parameter()]
     [String]
     $Commit,
@@ -115,24 +115,24 @@ function Confirm-WindowsFeatures {
 }
 
 # setup_env defines needed environment variables.
-function Set-Environment()
-{
-    [CmdletBinding()]
-    param (
-        [Parameter()]
-        [String]
-        $DefaultTarPrefix
-    )
+function Set-Environment() {
     # --- bail if we are not administrator ---
     $adminRole = [Security.Principal.WindowsBuiltInRole]::Administrator
     $currentRole = [Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()
-    If (-NOT $currentRole.IsInRole($adminRole))
-    {
+    if (-NOT $currentRole.IsInRole($adminRole)) {
         Write-FatalLog "You need to be administrator to perform this install"
+    }
+    if ($env:CATTLE_AGENT_BIN_PREFIX) {
+        $TarPrefix = $env:CATTLE_AGENT_BIN_PREFIX
+        [System.Environment]::SetEnvironmentVariable('CATTLE_AGENT_BIN_PREFIX', $TarPrefix, 'Machine')
+    }
+    else {
+        [System.Environment]::SetEnvironmentVariable('CATTLE_AGENT_BIN_PREFIX', $TarPrefix, 'Machine')
     }
 
     Write-Host "Using $($Channel) channel of rke2 for installation"
 }
+
 
 # check_method_conflict will exit with an error if the user attempts to install
 # via tar method on a host with existing chocolatey package.
@@ -149,18 +149,18 @@ function Test-MethodConflict() {
 # fatal if architecture not supported.
 function Get-ArchitectureInfo() {
     $arch = $env:PROCESSOR_ARCHITECTURE.ToLower()
-    if("$arch" -ne "amd64") {
+    if ("$arch" -ne "amd64") {
         Write-FatalLog "unsupported architecture $(env:PROCESSOR_ARCHITECTURE)"
         exit 1
     }
 
-    return @{ Suffix = "windows-$arch"; Arch = "$arch"}
+    return @{ Suffix = "windows-$arch"; Arch = "$arch" }
 }
 
 # --- use desired rke2 version if defined or find version from channel ---
 function Get-ReleaseVersion() {
     if ($Commit) {
-        $Version = "commit $($Commit)}"
+        $Version = "commit $($Commit)"
     }
     elseif ($Version) {
         $Version = $Version
@@ -296,7 +296,7 @@ function Copy-LocalTarball() {
     )       
     $archInfo = Get-ArchitectureInfo
     $suffix = $archInfo.Suffix  
-    Write-InfoLog "staging tarball from $ArtifPathactPath/rke2.$suffix.tar.gz"
+    Write-InfoLog "staging tarball from $ArtifactPath/rke2.$suffix.tar.gz"
     Copy-Item -Path "$Path/rke2.$suffix.tar.gz" -Destination $DestinationPath -Force
 }
 
@@ -366,7 +366,7 @@ function Find-Checksum() {
     )
     try {
         $matchInfo = Select-String -Path $ChecksumFilePath -Pattern $Pattern
-        if($matchInfo) {
+        if ($matchInfo) {
             return $matchInfo.Line.Split(" ")[0]   
         }
         return ""
@@ -409,7 +409,7 @@ function Get-AirgapChecksums() {
         $TempAirgapChecksums
     )
     
-    if (-Not $CommitHash){
+    if (-Not $CommitHash) {
         return
     }
 
@@ -441,14 +441,14 @@ function Get-AirgapTarball() {
         $TempAirgapTarball        
     )
 
-    if (-Not $CommitHash){
+    if (-Not $CommitHash) {
         return
     }    
 
     $archInfo = Get-ArchitectureInfo
     $suffix = $archInfo.Suffix    
 
-    $AirgapTarballUrl= "$StorageUrl/rke2-images.$suffix$CommitHash.tar.zst"
+    $AirgapTarballUrl = "$StorageUrl/rke2-images.$suffix$CommitHash.tar.zst"
 
     # try for zst first; if that fails use gz for older release branches
     if (!(Test-Download -Url $AirgapTarballUrl)) {
@@ -474,7 +474,7 @@ function Test-AirgapTarballChecksum() {
         $TempAirGapTarball
     )
 
-    if (-Not $CommitHash){
+    if (-Not $CommitHash) {
         return
     }
 
@@ -509,7 +509,7 @@ function Install-AirgapTarball() {
         $TempAirgapChecksums
     )
 
-    if (-Not $CommitHash){
+    if (-Not $CommitHash) {
         return
     }
 
@@ -527,20 +527,18 @@ function Install-AirgapTarball() {
 # Globals
 $STORAGE_URL = "https://storage.googleapis.com/rke2-ci-builds"
 $INSTALL_RKE2_GITHUB_URL = "https://github.com/rancher/rke2"
-$DEFAULT_TAR_PREFIX = "C:\usr\local"
-$INSTALL_RKE2_TAR_PREFIX = "C:\usr\local"
 
 Confirm-WindowsFeatures -RequiredFeatures @("Containers")
-Set-Environment -DefaultTarPrefix $DEFAULT_TAR_PREFIX
+Set-Environment 
 Test-MethodConflict
 
 switch ($Method) {
     "tar" { 
         $temp = ""
-        if($env:TMP){
+        if ($env:TMP) {
             $temp = $env:TMP
         }
-        elseif($env:TEMP){
+        elseif ($env:TEMP) {
             $temp = $env:TEMP
         }
 
@@ -555,7 +553,7 @@ switch ($Method) {
         $TMP_AIRGAP_CHECKSUMS = Join-Path -Path $TMP_DIR -ChildPath "rke2-images.checksums"
         $TMP_AIRGAP_TARBALL = Join-Path -Path $TMP_DIR -ChildPath "rke2-images.tarball"	
 
-        if ($ArtifactPath){
+        if ($ArtifactPath) {
             $checksums = Copy-LocalChecksums -Path $ArtifactPath -DestinationPath $TMP_AIRGAP_CHECKSUMS
             $CHECKSUM_EXPECTED = $checksums.ExpectedChecksum
             $AIRGAP_CHECKSUM_EXPECTED = $checksums.ExpectedAirgapChecksum
@@ -577,9 +575,9 @@ switch ($Method) {
         Test-AirgapTarballChecksum -CommitHash $Commit -ExpectedAirGapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempAirGapTarball $TMP_AIRGAP_TARBALL
         Install-AirgapTarball -CommitHash $Commit -InstallAgentImageDir $AgentImagesDir -TempAirgapTarball $TMP_AIRGAP_TARBALL -ExpectedAirGapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempAirgapChecksums $TMP_AIRGAP_CHECKSUMS
         Test-TarballChecksum -Tarball $TMP_TARBALL -ExpectedChecksum $CHECKSUM_EXPECTED
-        Expand-Tarball -InstallPath $INSTALL_RKE2_TAR_PREFIX -Tarball $TMP_TARBALL
-        Write-InfoLog "install complete; you may want to run:  `$env:PATH+=`";$INSTALL_RKE2_TAR_PREFIX\bin;C:\var\lib\rancher\rke2\bin`""
-     }
+        Expand-Tarball -InstallPath $TarPrefix -Tarball $TMP_TARBALL
+        Write-InfoLog "install complete; you may want to run:  `$env:PATH+=`";$TarPrefix\bin;C:\var\lib\rancher\rke2\bin`""
+    }
     "choco" {  
         Write-FatalLog "Currently unsupported installation method. $Method will be supported soon.."
     }

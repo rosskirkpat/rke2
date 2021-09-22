@@ -220,6 +220,7 @@ function Reset-Environment () {
     foreach ($v in $customVars) {
         Remove-Item Env:$v
     }
+}
 
 function Remove-Containerd () {
     $env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"

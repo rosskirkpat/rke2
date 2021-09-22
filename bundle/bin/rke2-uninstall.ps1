@@ -38,7 +38,7 @@ $VerbosePreference = 'SilentlyContinue'
 $DebugPreference = 'SilentlyContinue'
 $InformationPreference = 'SilentlyContinue'
 
-function Check-Command($cmdname)
+function Test-Command($cmdname)
 {
     return [bool](Get-Command -Name $cmdname -ErrorAction SilentlyContinue)
 }
@@ -170,7 +170,7 @@ Get-Service -Name "rke2" -ErrorAction Ignore | Where-Object {$_.Status -eq "Runn
 
 }
 
-function Clean-HNS () {
+function Reset-HNS () {
 try {
     Get-HnsNetwork | Where-Object { $_.Name -eq 'Calico' -or $_.Name -eq 'vxlan0' -or $_.Name -eq 'nat' -or $_.Name -eq 'External'} | Select-Object Name, ID | ForEach-Object {
         Write-LogInfo "Cleaning up HnsNetwork $($_.Name) ..."
@@ -198,13 +198,8 @@ catch {
 }
 
 # clean up data
-function Clean-Data () {
-    $cleanDirs = @(
-    "c:/usr"
-    "c:/etc"
-    "c:/run"
-    "c:/var"
-    )
+function Remove-Data () {
+    $cleanDirs = @("c:/usr", "c:/etc", "c:/run", "c:/var")
     foreach ($dir in $cleanDirs) {
         Write-LogInfo "Cleaning $dir..."
         if (Test-Path $dir) {
@@ -220,24 +215,31 @@ function Clean-Data () {
     }
 }
 
-function Clean-Containerd () {
-    if  (Check-Command ctr) {
-        $namespaces = $(List-Namespaces)
+function Reset-Environment () {
+    $customVars = @('CATTLE_AGENT_BINARY_URL', 'CATTLE_AGENT_CONFIG_DIR', 'CATTLE_AGENT_LOGLEVEL', 'CATTLE_AGENT_VAR_DIR', 'CATTLE_CA_CHECKSUM', 'CATTLE_ID', 'CATTLE_LABELS', 'CATTLE_PRESERVE_WORKDIR', 'CATTLE_REMOTE_ENABLED', 'CATTLE_ROLE_CONTROLPLANE', 'CATTLE_ROLE_ETCD', 'CATTLE_ROLE_WORKER', 'CATTLE_SERVER', 'CATTLE_SERVER_CHECKSUM', 'CATTLE_TOKEN', 'RANCHER_CERT', 'RKE2_PATH')
+    foreach ($v in $customVars) {
+        Remove-Item Env:$v
+    }
+
+function Remove-Containerd () {
+    $env:PATH+=";c:\var\lib\rancher\rke2\bin;c:\usr\local\bin"
+    if  (Test-Command ctr) {
+        $namespaces = $(Find-Namespaces)
         foreach ($ns in $namespaces) {
-            $tasks = $(List-Tasks $ns)
+            $tasks = $(Find-Tasks $ns)
             foreach ($task in $tasks){
-                    Delete-Task $ns $task
+                Remove-Task $ns $task
             }
-            $containers = $(List-ContainersInNamespace $ns)
+            $containers = $(Find-ContainersInNamespace $ns)
             foreach ($container in $containers) {
-            Delete-Container $ns $container
+                Remove-Container $ns $container
             }
 
-            $images = $(List-Images $ns)
+            $images = $(Find-Images $ns)
             foreach ($image in $images) {
-                    Delete-Image $ns $image
+                Remove-Image $ns $image
             }
-            Delete-Namespace $ns
+            Remove-Namespace $ns
         }    
     }
     else {
@@ -246,44 +248,44 @@ function Clean-Containerd () {
     }
 }
 
-function List-Namespaces () {
+function Find-Namespaces () {
     "$RKE2_PATH/ctr --namespace=$namespace namespace list -q"
 }
 
-function List-ContainersInNamespace() {
+function Find-ContainersInNamespace() {
     $namespace = $1
     "$RKE2_PATH/ctr --namespace=$namespace container list -q"
 }
 
-function List-Tasks() {
+function Find-Tasks() {
     $namespace = $1
     "$RKE2_PATH/ctr -n $namespace task list -q"
 }
 
-function List-Images() {
+function Find-Images() {
     $namespace = $1
     "$RKE2_PATH/ctr -n $namespace image list -q"
 }
 
-function Delete-Image() {
+function Remove-Image() {
     $namespace = $1
     $image = $2
     "$RKE2_PATH/ctr -n $namespace image rm $image"
 }
 
-function Delete-Task() {
+function Remove-Task() {
     $namespace = $1
     $task = $2
     "$RKE2_PATH/ctr -n $namespace task delete --force $task"
 }
 
-function Delete-Container() {
+function Remove-Container() {
     $namespace = $1
     $container = $2
     "$RKE2_PATH/ctr --namespace=$namespace container delete $container"
 }
 
-function Delete-Namespace() {
+function Remove-Namespace() {
     $namespace = $1
     "$RKE2_PATH/ctr namespace remove $namespace"
 }
@@ -291,9 +293,10 @@ function Delete-Namespace() {
 function RKE2-Uninstall () {
     Get-Args
     Set-Environment
-    Clean-Containerd
-    Clean-HNS
-    Clean-Data
+    Reset-Environment
+    Remove-Containerd
+    Reset-HNS
+    Remove-Data
     Write-LogInfo "Finished!"
 }
 

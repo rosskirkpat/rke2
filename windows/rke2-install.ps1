@@ -57,7 +57,10 @@ param (
     $Token,
     [Parameter()]
     [Switch]
-    $Worker
+    $Worker,
+    [Parameter()]
+    [Switch]
+    $Version
 )
 function Rke2-Installer {
     [CmdletBinding()]
@@ -88,7 +91,10 @@ function Rke2-Installer {
         $Token,
         [Parameter()]
         [Switch]
-        $Worker
+        $Worker,
+        [Parameter()]
+        [Switch]
+        $Version
     )
 
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls -bor [Net.SecurityProtocolType]::Tls11 -bor [Net.SecurityProtocolType]::Tls12
@@ -156,6 +162,10 @@ function Rke2-Installer {
 
         if ($Worker) {
             $env:CATTLE_ROLE_WORKER = "true"
+        }
+
+        if ($Version){
+            $env:CATTLE_RKE2_VERSION = $Version
         }
     }
 
@@ -310,8 +320,11 @@ function Rke2-Installer {
                 curl.exe -sfL $Uri -o $configFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
             }
             else {
-                curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
                 curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -o $configFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
+            }
+            if ((Test-Path $configFile)) {
+                Write-LogInfo "rke2 config.yaml pulled successfully"
+                Write-LogInfo "$(Get-Content $configFile)"
             }
           
             if (-Not(Test-Path $configFile)) {
@@ -340,11 +353,11 @@ function Rke2-Installer {
         else {
             curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -o $infoFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Field: kubernetesversion" -H "Content-Type: application/json"
         }
+        Write-LogInfo "$(Get-Content $infoFile)"
         $clusterInfo = Get-Content $infoFile | ConvertFrom-Json
         if ([bool]($clusterInfo.PSobject.Properties.name -match "kubernetesversion")) {
             $env:CATTLE_RKE2_VERSION = $clusterInfo.kubernetesversion
         }
-
         Remove-Item -Path $infoFile -Force
     }
 

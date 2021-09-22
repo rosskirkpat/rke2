@@ -452,6 +452,9 @@ function Rke2-Installer {
         else {
             # Create Windows Service
             Write-LogInfo "RKE2 agent service not found, enabling agent service"
+            if (-Not(Test-Path -Path c:\usr\local\bin)) {
+                New-Item -Path c:\usr\local\bin -ItemType Directory
+            }
             Push-Location c:\usr\local\bin
             rke2.exe agent service --add
             Pop-Location

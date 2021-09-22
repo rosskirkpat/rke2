@@ -16,6 +16,7 @@
       - CATTLE_ROLE_CONTROLPLANE=false
       - CATTLE_ROLE_ETCD=false
       - CATTLE_ROLE_WORKER=false
+      - CATTLE_RKE2_VERSION
       - CATTLE_LABELS
       - CATTLE_TAINTS
       Advanced Environment Variables
@@ -334,7 +335,7 @@ function Rke2-Installer {
 
         $infoFile = Join-Path -Path $path -ChildPath $file
         if (-Not $env:CATTLE_CA_CHECKSUM) {
-            curl.exe -sfL $Ur -oi $infoFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Field: kubernetesversion" -H "Content-Type: application/json"
+            curl.exe -sfL $Uri -o $infoFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Field: kubernetesversion" -H "Content-Type: application/json"
         }
         else {
             curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -o $infoFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Field: kubernetesversion" -H "Content-Type: application/json"

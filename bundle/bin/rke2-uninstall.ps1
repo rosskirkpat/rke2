@@ -217,8 +217,14 @@ function Remove-Data () {
 
 function Reset-Environment () {
     $customVars = @('CATTLE_AGENT_BINARY_URL', 'CATTLE_AGENT_CONFIG_DIR', 'CATTLE_AGENT_LOGLEVEL', 'CATTLE_AGENT_VAR_DIR', 'CATTLE_CA_CHECKSUM', 'CATTLE_ID', 'CATTLE_LABELS', 'CATTLE_PRESERVE_WORKDIR', 'CATTLE_REMOTE_ENABLED', 'CATTLE_ROLE_CONTROLPLANE', 'CATTLE_ROLE_ETCD', 'CATTLE_ROLE_WORKER', 'CATTLE_SERVER', 'CATTLE_SERVER_CHECKSUM', 'CATTLE_TOKEN', 'RANCHER_CERT', 'RKE2_PATH')
-    foreach ($v in $customVars) {
-        Remove-Item Env:$v
+    Write-LogInfo "Cleaning RKE2 Environment Variables"
+    try {
+        foreach ($v in $customVars) {
+            Remove-Item Env:$v -Force -ErrorAction SilentlyContinue
+        }
+    }
+    catch {
+        Write-LogWarn "Could not reset environment variables: $($_)"
     }
 }
 

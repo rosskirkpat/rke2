@@ -292,11 +292,10 @@ function Rke2-Installer {
             exit 1
         }
     }
-
+    $retry_count = 0
     function Get-Rke2Config() {
         $path = "C:\etc\rancher\rke2"
         $file = "config.yaml"
-        $retry_count = 0
         if (-Not(Test-Path $path)) {
             New-Item -Path $path -ItemType Directory
         }
@@ -311,15 +310,16 @@ function Rke2-Installer {
             else {
                 curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -o $configFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
             }
-
-            if ($retry_count -gt 4) {
-                Write-LogFatal "RKE2 Config file wasn't found after 5 retries."
-            }
-            
+          
             if (-Not(Test-Path $configFile)) {
+                if ($retry_count -gt 4) {
+                    Write-LogInfo "Retrying: Pulling rke2 config.yaml from $Uri"
+                    Write-LogFatal "RKE2 Config file wasn't found after 5 retries."
+                }
+                $retry_count++
+                Write-LogInfo "Retrying: Pulling rke2 config.yaml from $Uri"
                 Start-Sleep -Seconds 30
                 Get-Rke2Config
-                $retry_count++
             }
         }
     }

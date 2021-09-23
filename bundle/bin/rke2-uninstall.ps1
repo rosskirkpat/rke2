@@ -256,52 +256,51 @@ function Remove-Containerd () {
 }
 
 function Find-Namespaces () {
-    "$RKE2_PATH/ctr --namespace=$namespace namespace list -q"
+    ctr --namespace=$namespace namespace list -q
 }
-
 function Find-ContainersInNamespace() {
     $namespace = $1
-    "$RKE2_PATH/ctr --namespace=$namespace container list -q"
+    ctr --namespace=$namespace container list -q
 }
 
 function Find-Tasks() {
     $namespace = $1
-    "$RKE2_PATH/ctr -n $namespace task list -q"
+    ctr -n $namespace task list -q
 }
 
 function Find-Images() {
     $namespace = $1
-    "$RKE2_PATH/ctr -n $namespace image list -q"
+    ctr -n $namespace image list -q
 }
 
 function Remove-Image() {
     $namespace = $1
     $image = $2
-    "$RKE2_PATH/ctr -n $namespace image rm $image"
+    ctr -n $namespace image rm $image
 }
 
 function Remove-Task() {
     $namespace = $1
     $task = $2
-    "$RKE2_PATH/ctr -n $namespace task delete --force $task"
+    ctr -n $namespace task delete --force $task
 }
 
 function Remove-Container() {
     $namespace = $1
     $container = $2
-    "$RKE2_PATH/ctr --namespace=$namespace container delete $container"
+    ctr --namespace=$namespace container delete $container
 }
 
 function Remove-Namespace() {
     $namespace = $1
-    "$RKE2_PATH/ctr namespace remove $namespace"
+    ctr namespace remove $namespace
 }
 
 function RKE2-Uninstall () {
     Get-Args
     Set-Environment
-    Reset-Environment
     Remove-Containerd
+    Reset-Environment
     Reset-HNS
     Remove-Data
     Write-LogInfo "Finished!"

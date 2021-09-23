@@ -311,11 +311,10 @@ function Rke2-Installer {
         if (-Not(Test-Path $path)) {
             New-Item -Path $path -ItemType Directory
         }
-
         $configFile = Join-Path -Path $path -ChildPath $file
         if (-Not(Test-Path $configFile)) {
             $Uri = "$($env:CATTLE_SERVER)/v3/connect/config-yaml"
-            Write-LogInfo "Pulling rke2 config.yaml from $Uri"
+            Write-LogInfo "Pulling RKE2 config.yaml from $Uri"
             if (-Not $env:CATTLE_CA_CHECKSUM) {
                 curl.exe -sfL $Uri -o $configFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
             }
@@ -323,15 +322,14 @@ function Rke2-Installer {
                 curl.exe --insecure --cacert $env:RANCHER_CERT -sfL $Uri -o $configFile -H "Authorization: Bearer $($env:CATTLE_TOKEN)" -H "X-Cattle-Id: $($env:CATTLE_ID)" -H "X-Cattle-Role-Worker: $($env:CATTLE_ROLE_WORKER)" -H "X-Cattle-Labels: $($env:CATTLE_LABELS)" -H "X-Cattle-Taints: $($env:CATTLE_TAINTS)" -H "X-Cattle-Address: $($env:CATTLE_ADDRESS)" -H "X-Cattle-Internal-Address: $($env:CATTLE_INTERNAL_ADDRESS)" -H "Content-Type: application/json"
             }
             if ((Test-Path $configFile)) {
-                Write-LogInfo "rke2 config.yaml pulled successfully"
-                Write-LogInfo "$(Get-Content $configFile)"
+                Write-LogInfo "RKE2 config.yaml pulled successfully"
+                Write-Debug "RKE2 config.yaml contents: $(Get-Content $configFile)"
             }
-          
             if (-Not(Test-Path $configFile)) {
                 if ($retry_count -gt 5) {
-                    Write-LogFatal "RKE2 Config file wasn't found after 5 retries."
+                    Write-LogFatal "RKE2 config file wasn't found after $retry_count retries."
                 }
-                Write-LogInfo "Retry Number $retry_count...Pulling rke2 config.yaml from $Uri"
+                Write-LogInfo "Retry Number $retry_count...Pulling RKE2 config.yaml from $Uri"
                 Start-Sleep -Seconds 12
                 Get-Rke2Config
             }

@@ -13,25 +13,6 @@
     Uninstalls the RKE2 Windows service and cleans the RKE2 Windows Agent (Worker) Node
 #>
 
-[CmdletBinding()]
-param ( 
-    [Parameter()]
-    [String]
-    $Rke2Path
-)
-
-function Get-Args {   
-    if ($Rke2Path) {
-        $env:RKE2_PATH = $Rke2Path
-    }
-}
-
-function Set-Environment {
-    if (-Not  $env:RKE2_PATH) {
-        $env:RKE2_PATH = "c:/usr/local/bin"
-    }
-}
-
 $ErrorActionPreference = 'Stop'
 $WarningPreference = 'SilentlyContinue'
 $VerbosePreference = 'SilentlyContinue'
@@ -139,6 +120,11 @@ Get-Process -ErrorAction Ignore -Name "containerd*" | ForEach-Object {
     $_ | Stop-Process -ErrorAction Ignore -Force
 }
 
+Get-Process -ErrorAction Ignore -Name "wins*" | ForEach-Object {
+    Write-LogInfo "Stopping process $($_.Name) ..."
+    $_ | Stop-Process -ErrorAction Ignore -Force
+}
+
 # clean up firewall rules
 Get-NetFirewallRule -PolicyStore ActiveStore -Name "rke2*" -ErrorAction Ignore | ForEach-Object {
     Write-LogInfo "Cleaning up firewall rule $($_.Name) ..."
@@ -167,29 +153,52 @@ Get-Service -Name "rke2" -ErrorAction Ignore | Where-Object {$_.Status -eq "Runn
             sc.exe delete rke2
         }
     }
+}
 
+# clean up wins service
+Get-Service -Name "wins" -ErrorAction Ignore | Where-Object {$_.Status -eq "Running"} | ForEach-Object {
+    if ($_.Status -eq "Running") {
+        Write-LogInfo "Stopping wins service ..."
+        $_ | Stop-Service -Force -ErrorAction Ignore
+        Write-LogInfo "Removing the wins service ..."
+        if (($PSVersionTable.PSVersion.Major) -ge 6) {
+            Remove-Service wins
+        }
+        else {
+            sc.exe delete wins
+        }
+    }
+    else {
+        Write-LogInfo "Removing the wins service ..."
+        if (($PSVersionTable.PSVersion.Major) -ge 6) {
+            Remove-Service wins
+        }
+        else {
+            sc.exe delete wins
+        }
+    }
 }
 
 function Reset-HNS () {
 try {
     Get-HnsNetwork | Where-Object { $_.Name -eq 'Calico' -or $_.Name -eq 'vxlan0' -or $_.Name -eq 'nat' -or $_.Name -eq 'External'} | Select-Object Name, ID | ForEach-Object {
         Write-LogInfo "Cleaning up HnsNetwork $($_.Name) ..."
-        hnsdiag delete networks ($_.ID)
+        hnsdiag delete networks $($_.ID)
     }
 
     Invoke-HNSRequest -Method "GET" -Type "policylists" | Where-Object {-not [string]::IsNullOrEmpty($_.Id)} | ForEach-Object {
-        Write-LogInfo "Cleaning up HNSPolicyList `$(`$_.Id) ..."
-        Invoke-HNSRequest -Method "DELETE" -Type "policylists" -Id `$_.Id
+        Write-LogInfo "Cleaning up HNSPolicyList $($_.ID) ..."
+        Invoke-HNSRequest -Method "DELETE" -Type "policylists" -Id ($_.ID)
     }
 
     Get-HnsEndpoint  | Select-Object Name, ID | ForEach-Object {
         Write-LogInfo "Cleaning up HnsEndpoint $($_.Name) ..."
-        hnsdiag delete endpoints ($_.ID)
+        hnsdiag delete endpoints $($_.ID)
     }
     
     Get-HnsNamespace  | Select-Object ID | ForEach-Object {
         Write-LogInfo "Cleaning up HnsEndpoint $($_.ID) ..."
-        hnsdiag delete namespace ($_.ID)
+        hnsdiag delete namespace $($_.ID)
     }
 }
 catch {
@@ -211,6 +220,26 @@ function Remove-Data () {
         }
         else {
             Write-LogInfo "$dir is empty, moving on"
+        }
+    }
+    $cleanCustomDirs = @("$env:CATTLE_AGENT_BIN_PREFIX", "$env:CATTLE_AGENT_VAR_DIR", "$env:CATTLE_AGENT_CONFIG_DIR")
+    if (!([string]::IsNullOrEmpty($cleanCustomDirs))) {
+        foreach ($dirs in $cleanCustomDirs) {
+            if ($dirs.Contains("/")) {
+                 $dirs = $dirs -Replace "/", "\"
+            }
+            $dirs = $dirs.Substring(0, $dirs.IndexOf('\'))
+            Write-LogInfo "Cleaning $dirs..."
+            if (Test-Path $dirs) {
+                $symLinkCheck = "Get-ChildItem -Path $dirs -Recurse -Attributes ReparsePoint"
+                if (!([string]::IsNullOrEmpty($symLinkCheck))) {
+                    Get-ChildItem -Path $dirs -Recurse -Attributes ReparsePoint | ForEach-Object { $_.Delete() }
+                }
+                Remove-Item -Path $dirs -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            else {
+                Write-LogInfo "$dirs is empty, moving on"
+            }
         }
     }
 }
@@ -296,15 +325,15 @@ function Remove-Namespace() {
     ctr namespace remove $namespace
 }
 
-function RKE2-Uninstall () {
+function Rke2-Uninstall () {
     Get-Args
     Set-Environment
-    Remove-Containerd
-    Reset-Environment
+    Remove-Containerd    
     Reset-HNS
     Remove-Data
+    Reset-Environment
     Write-LogInfo "Finished!"
 }
 
-RKE2-Uninstall
+Rke2-Uninstall
 exit 0

@@ -9,6 +9,7 @@
       - CATTLE_AGENT_LOGLEVEL (default: debug)
       - CATTLE_AGENT_CONFIG_DIR (default: C:/etc/rancher/agent)
       - CATTLE_AGENT_VAR_DIR (default: C:/var/lib/rancher/agent)
+      - CATTLE_AGENT_BIN_PREFIX (default: C:/usr/local)
       Rancher 2.6+ Variables
       - CATTLE_SERVER
       - CATTLE_TOKEN
@@ -241,12 +242,22 @@ function Rke2-Installer {
         }
 
         if (-Not $env:CATTLE_AGENT_VAR_DIR) {
-            $env:CATTLE_AGENT_VAR_DIR = "C:/etc/rancher/agent"
+            $env:CATTLE_AGENT_VAR_DIR = "C:/var/lib/rancher/agent"
             Write-LogInfo "Using default agent var directory $( $env:CATTLE_AGENT_VAR_DIR )"
         }
         if (-Not (Test-Path $env:CATTLE_AGENT_VAR_DIR)) {
             New-Item -Path $env:CATTLE_AGENT_VAR_DIR -ItemType Directory -Force
         }
+
+
+        if (-Not $env:CATTLE_AGENT_BIN_PREFIX) {
+            $env:CATTLE_AGENT_BIN_PREFIX = "C:/usr/local"
+            Write-LogInfo "Using default agent bin prefix $( $env:CATTLE_AGENT_BIN_PREFIX )"
+        }
+        if (-Not (Test-Path $env:CATTLE_AGENT_BIN_PREFIX)) {
+            New-Item -Path $env:CATTLE_AGENT_BIN_PREFIX -ItemType Directory -Force
+        }
+        
 
         $env:CATTLE_ADDRESS = Get-Address -Value $env:CATTLE_ADDRESS
         $env:CATTLE_INTERNAL_ADDRESS = Get-Address -Value $env:CATTLE_INTERNAL_ADDRESS
@@ -254,22 +265,22 @@ function Rke2-Installer {
 
     function Test-Architecture() {
         if ($env:PROCESSOR_ARCHITECTURE -ne "AMD64") {
-            Write-LogFatal "Unsupported architecture $( $env:PROCESSOR_ARCHITECTUR )"
+            Write-LogFatal "Unsupported architecture $( $env:PROCESSOR_ARCHITECTURE )"
         }
     }
 
     function Invoke-Rke2AgentDownload() {
-        $localLocation = "C:\var\lib\rancher"
+        $localLocation = "C:/var/lib/rancher"
         if (-Not (Test-Path $localLocation)) {
             New-Item -Path $localLocation -ItemType Directory
         }
         if ($env:CATTLE_AGENT_BINARY_LOCAL) {
             Write-LogInfo "Using local RKE2 installer from $($env:CATTLE_AGENT_BINARY_LOCAL_LOCATION)"
-            Copy-Item -Path $env:CATTLE_AGENT_BINARY_LOCAL -Destination "$($localLocation)\install.ps1"
+            Copy-Item -Path $env:CATTLE_AGENT_BINARY_LOCAL -Destination "$($localLocation)/install.ps1"
         }
         else {
             Write-LogInfo "Downloading RKE2 installer from $($env:CATTLE_AGENT_BINARY_URL)"
-            curl.exe -sfL $env:CATTLE_AGENT_BINARY_URL -o "$($localLocation)\install.ps1"
+            curl.exe -sfL $env:CATTLE_AGENT_BINARY_URL -o "$($localLocation)/install.ps1"
         }
     }
 
@@ -338,7 +349,7 @@ function Rke2-Installer {
 
     function Get-Rke2Info() {
         $Uri = "$($env:CATTLE_SERVER)/v3/connect/cluster-info"
-        $path = "C:\etc\rancher\rke2"
+        $path = "C:/etc/rancher/rke2"
         $file = "info.json"
         if (-Not(Test-Path $path)) {
             New-Item -Path $path -ItemType Directory
@@ -432,10 +443,10 @@ function Rke2-Installer {
         Get-Rke2Info
         
         if ($env:CATTLE_RKE2_VERSION) {
-            Invoke-Expression -Command "C:\var\lib\rancher\install.ps1 -Version $($env:CATTLE_RKE2_VERSION)"
+            Invoke-Expression -Command "C:/var/lib/rancher/install.ps1 -Version $($env:CATTLE_RKE2_VERSION)"
         }
         else {
-            Invoke-Expression -Command "C:\var\lib\rancher\install.ps1"
+            Invoke-Expression -Command "C:/var/lib/rancher/install.ps1"
         }
 
         Write-LogInfo "Checking if RKE2 agent service exists"
@@ -450,10 +461,10 @@ function Rke2-Installer {
         else {
             # Create Windows Service
             Write-LogInfo "RKE2 agent service not found, enabling agent service"
-            if (-Not(Test-Path -Path c:\usr\local\bin)) {
-                New-Item -Path C:\usr\local\bin -ItemType Directory -Force
+            if (-Not(Test-Path -Path ${env:CATTLE_AGENT_BIN_PREFIX}/bin)) {
+                New-Item -Path ${env:CATTLE_AGENT_BIN_PREFIX}/bin -ItemType Directory -Force
             }
-            Push-Location c:\usr\local\bin
+            Push-Location ${env:CATTLE_AGENT_BIN_PREFIX}/bin
             rke2.exe agent service --add
             Pop-Location
             Start-Sleep -s 5

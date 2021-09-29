@@ -5,12 +5,12 @@ set -ex
   exit 0
 }
 
-[[ $1 =~ rke2\.(linux|windows)-.+\.tar\.gz ]] || {
+[[ $1 =~ rke2\.(linux|windows)-.+?\.tar\.gz ]] || {
   echo "First argument should be a dist bundle tarball" >&2
   exit 1
 }
 
-[[ $2 =~ rke2-images\..+\.tar\.zst ]] || {
+[[ $2 =~ rke2-images\.(linux|windows)-.+?\.tar\.zst ]] || {
   echo "Second argument should be a compressed airgap runtime image tarball" >&2
   exit 1
 }

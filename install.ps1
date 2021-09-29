@@ -157,6 +157,12 @@ function Get-ArchitectureInfo() {
     return @{ Suffix = "windows-$arch"; Arch = "$arch" }
 }
 
+# get Windows Server Build Version
+function Get-BuildVersion() {
+    $BuildVersion = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion" -Name ReleaseId).ReleaseId
+    return $BuildVersion
+}
+
 # --- use desired rke2 version if defined or find version from channel ---
 function Get-ReleaseVersion() {
     if ($Commit) {
@@ -201,7 +207,7 @@ function Get-Checksums() {
     $checksumsUrl = ""
 
     if ($CommitHash) {
-        $checksumsUrl = "$StorageUrl/rke2.$suffix$CommitHash.tar.gz.sha256sum"
+        $checksumsUrl = "$StorageUrl/rke2.$suffix-$CommitHash.tar.gz.sha256sum"
     }
 
     else {
@@ -239,7 +245,7 @@ function Get-Tarball() {
 
     $tarballUrl = ""
     if ($CommitHash) {
-        $tarballUrl = "$StorageUrl/rke2.$suffix$CommitHash.tar.gz"
+        $tarballUrl = "$StorageUrl/rke2.$suffix-$CommitHash.tar.gz"
     }
     else {
         $tarballUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/rke2.$suffix.tar.gz"
@@ -265,19 +271,19 @@ function Copy-LocalChecksums() {
     $arch = $archInfo.Arch
 
     Write-InfoLog "staging local checksums from $-Path/sha256sum-$arch.txt"
-    Copy-Item -Path "$-Path/sha256sum-$ARCH.txt" -Destination $DestinationPath -Force
+    Copy-Item -Path "$-Path/sha256sum-$arch.txt" -Destination $DestinationPath -Force
     
     #TODO: 
     $expectedChecksum = Find-Checksum -ChecksumFilePath $DestinationPath -Pattern "rke2.$suffix.tar.gz"
     $expectedAirgapChecksum = ""
     
-    if (Test-Path -Path "$Path/rke2-images.$suffix.tar.zst" -PathType Leaf) {
+    if (Test-Path -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.zst" -PathType Leaf) {
         # TODO: Select-String
-        $expectedAirgapChecksum = Find-Checksum -ChecksumFilePath $DestinationPath -Pattern "rke2-images.$suffix.tar.zst"
+        $expectedAirgapChecksum = Find-Checksum -ChecksumFilePath $DestinationPath -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.zst"
     }
-    elseif (Test-Path -Path "$Path/rke2-images.$suffix.tar.gz" -PathType Leaf) {     
+    elseif (Test-Path -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.gz" -PathType Leaf) {     
         # TODO: Select-String   
-        $expectedAirgapChecksum = Find-Checksum -ChecksumFilePath $DestinationPath -Pattern "rke2-images.$suffix.tar.gz"
+        $expectedAirgapChecksum = Find-Checksum -ChecksumFilePath $DestinationPath -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz"
     }
 
     return @{ ExpectedChecksum = $expectedChecksum; ExpectedAirgapChecksum = $expectedAirgapChecksum }
@@ -293,11 +299,12 @@ function Copy-LocalTarball() {
         [Parameter()]
         [String]
         $DestinationPath
-    )       
+    )
     $archInfo = Get-ArchitectureInfo
-    $suffix = $archInfo.Suffix  
-    Write-InfoLog "staging tarball from $ArtifactPath/rke2.$suffix.tar.gz"
-    Copy-Item -Path "$Path/rke2.$suffix.tar.gz" -Destination $DestinationPath -Force
+    $arch = $archInfo.Arch
+
+    Write-InfoLog "staging tarball from $ArtifactPath/rke2-windows-$BuildVersion-$arch-images.tar.gz"
+    Copy-Item -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.gz" -Destination $DestinationPath -Force
 }
 
 # stage_local_airgap_tarball stages the local checksum hash for validation.
@@ -313,10 +320,11 @@ function Copy-LocalAirgapTarball() {
     )   
 
     $archInfo = Get-ArchitectureInfo
-    $suffix = $archInfo.Suffix  
-    if (!(Test-Path -Path "$Path/rke2-images.$suffix.tar.zst" -PathType Leaf)) {
-        Write-InfoLog "staging zst airgap image tarball from $Path/rke2-images.$suffix.tar.zst"
-        Copy-Item -Path "$Path/rke2-images.$suffix.tar.zst" -Destination $DestinationPath -Force
+    $arch = $archInfo.Arch
+
+    if (!(Test-Path -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.zst" -PathType Leaf)) {
+        Write-InfoLog "staging zst airgap image tarball from $Path/rke2-windows-$BuildVersion-$arch-images.tar.zst"
+        Copy-Item -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.zst" -Destination $DestinationPath -Force
     }
 }
 
@@ -412,18 +420,17 @@ function Get-AirgapChecksums() {
     if (-Not $CommitHash) {
         return
     }
-
     $archInfo = Get-ArchitectureInfo
-    $suffix = $archInfo.Suffix  
+    $arch = $archInfo.Arch
 
-    $AirgapChecksumsUrl = "$StorageUrl/rke2-images.$suffix$CommitHash.tar.zst.sha256sum"
+    $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst.sha256sum"
     # try for zst first; if that fails use gz for older release branches
-    if (!(Test-Download -Uri $AirgapChecksumsUrl)) {
-        $AirgapChecksumsUrl = "$StorageUrl/rke2-images.$suffix$CommitHash.tar.gz.sha256sum"
+    if (!(Test-Download -Url $AirgapChecksumsUrl)) {
+        $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.gz.sha256sum"
     }
     Write-InfoLog "downloading airgap checksums at $AirgapChecksumsUrl"
     curl.exe -sfL $AirgapChecksumsUrl -o $TempAirgapChecksums
-    return Find-Checksum -Path $TempAirgapChecksums -Pattern "rke2-images.$suffix.tar"
+    return Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar"
 }
 
 # download_airgap_tarball downloads the airgap image tarball.
@@ -446,13 +453,13 @@ function Get-AirgapTarball() {
     }    
 
     $archInfo = Get-ArchitectureInfo
-    $suffix = $archInfo.Suffix    
+    $arch = $archInfo.Arch
 
-    $AirgapTarballUrl = "$StorageUrl/rke2-images.$suffix$CommitHash.tar.zst"
+    $AirgapTarballUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst"
 
     # try for zst first; if that fails use gz for older release branches
     if (!(Test-Download -Url $AirgapTarballUrl)) {
-        $AirgapTarballUrl = "$StorageUrl/rke2-images.$suffix$CommitHash.tar.gz"
+        $AirgapTarballUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.gz"
     }
     Write-InfoLog "downloading airgap tarball at $AirgapTarballUrl"
     curl.exe -sfL $AirgapTarballUrl -o $TempAirgapTarball
@@ -516,12 +523,14 @@ function Install-AirgapTarball() {
     if ($ExpectedAirGapChecksum) {
         return
     }
-    New-Item -Path $InstallAgentImageDir -ItemType Directory | Out-null
+
     $archInfo = Get-ArchitectureInfo
-    $suffix = $archInfo.Suffix
+    $arch = $archInfo.Arch
+
+    New-Item -Path $InstallAgentImageDir -ItemType Directory | Out-null
 
     Write-InfoLog "installing airgap tarball to $InstallAgentImageDir"
-    Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-images.$suffix.tar.zst" -Force
+    Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-windows-$BuildVersion-$arch-images.tar.zst" -Force
 }
 
 # Globals

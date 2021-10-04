@@ -23,6 +23,10 @@ dapper-ci: .ci                           ## Used by Drone CI, does the same as "
 build:                                   ## Build using host go tools
 	./scripts/build
 
+.PHONY: build-windows
+build:                                   ## Build using host go tools
+	./scripts/windows/ci.ps1
+
 .PHONY: build-binary
 build-binary:                             	## Build only the Linux binary using host go tools
 	./scripts/build-binary

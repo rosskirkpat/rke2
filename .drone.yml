@@ -16,11 +16,12 @@ steps:
       # GCLOUD_AUTH:
       #   from_secret: gcloud_auth
     commands:
-      - dapper.exe -f scripts/windows/Dockerfile-windows.dapper make dapper-ci
+      # - dapper.exe -f scripts/windows/Dockerfile-windows.dapper make dapper-ci
+      - dapper.exe -f scripts/windows/Dockerfile-windows.dapper -d ci
     volumes:
       - name: docker
         # path: \\\\.\\pipe\\docker_engine
-        path: \\.\\pipe\\docker_engine
+        path: \\.\pipe\docker_engine
 
 volumes:
   - name: docker_pipe

@@ -20,14 +20,14 @@ function Log-Warn
 
 function Log-Error
 {
-    Write-Host -NoNewline -ForegroundColor DarkRed "ERRO "
+    Write-Host -NoNewline -ForegroundColor DarkRed "ERROR: "
     Write-Host -ForegroundColor Gray ("{0,-44}" -f ($args -join " "))
 }
 
 
 function Log-Fatal
 {
-    Write-Host -NoNewline -ForegroundColor DarkRed "FATA: "
+    Write-Host -NoNewline -ForegroundColor DarkRed "FATAL: "
     Write-Host -ForegroundColor Gray ("{0,-44}" -f ($args -join " "))
 
     exit 255

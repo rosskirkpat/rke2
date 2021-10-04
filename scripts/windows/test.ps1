@@ -6,7 +6,7 @@ Import-Module -WarningAction Ignore -Name "$PSScriptRoot\utils.psm1"
 
 Invoke-Script -File "$PSScriptRoot\version.ps1"
 
-$SRC_PATH = (Resolve-Path "$PSScriptRoot\..").Path
+$SRC_PATH = (Resolve-Path "$PSScriptRoot\..\..").Path
 Push-Location $SRC_PATH
 
 Get-Command -ErrorAction Ignore -Name @("x86_64-w64-mingw32-gcc.exe", "x86_64-w64-mingw32-g++.exe") | Out-Null

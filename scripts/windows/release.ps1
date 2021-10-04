@@ -33,3 +33,14 @@ if ($?) {
     docker rmi "$pushTag-bak" | Out-Null
     Write-Host -ForegroundColor Red "$pushTag has something wrong while PUSHING"
 }
+
+
+# else {
+#     # validate the tag format and create our VERSION variable
+#     if (-not ($TAG -match '^v[0-9]{1}\.[0-9]{2}\.[0-9]+-*[a-zA-Z0-9]*\+rke2r[0-9]+$')) {
+#         Write-Host "Tag does not match our expected format. Exiting."
+#         exit 1
+#     }
+
+#     $VERSION = $TAG
+# $VERSION = $VERSION.Replace('+', '-')

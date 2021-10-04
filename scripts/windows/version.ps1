@@ -84,8 +84,12 @@ if (-not $PROG) {
 }
 $env:PROG = $PROG
 
-$REPO = "rancher"
+$REPO = $env:REPO
+if (-not $REPO) {
+    $REPO = "rancher"
+}
 $env:REPO = $REPO
+
 $env:IMAGE = "$env:REPO/${env:PROG}:$env:VERSION"
 $REGISTRY = "docker.io"
 $env:REGISTRY = $REGISTRY

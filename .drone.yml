@@ -19,13 +19,14 @@ steps:
       - dapper.exe -f scripts/windows/Dockerfile-windows.dapper make dapper-ci
     volumes:
       - name: docker
-        path: \\\\.\\pipe\\docker_engine
-        
+        # path: \\\\.\\pipe\\docker_engine
+        path: \\.\\pipe\\docker_engine
 
 volumes:
   - name: docker_pipe
     host:
-      path: \\\\.\\pipe\\docker_engine
+      # path: \\\\.\\pipe\\docker_engine
+      path: \\.\\pipe\\docker_engine
 ---
 kind: pipeline
 type: docker

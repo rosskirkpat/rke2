@@ -9,21 +9,22 @@ platform:
 
 steps:
   - name: build-windows
+    pull: always
     image: rancher/dapper:v0.5.6
-    environment:
-      ENABLE_REGISTRY: 'true'
-      GCLOUD_AUTH:
-        from_secret: gcloud_auth
+    # environment:
+      # ENABLE_REGISTRY: 'true'
+      # GCLOUD_AUTH:
+      #   from_secret: gcloud_auth
     commands:
-      - dapper -f scripts/windows/Dockerfile-windows.dapper --target dapper make dapper-ci
-    volumes:
-      - name: docker
-        path: /var/run/docker.sock
+      - dapper.exe -f scripts/windows/Dockerfile-windows.dapper make dapper-ci
+  volumes:
+    - name: docker
+      path: \\\\.\\pipe\\docker_engine
+        
 
 volumes:
   - name: docker
-    host:
-      path: /var/run/docker.sock
+    path: \\\\.\\pipe\\docker_engine
 ---
 kind: pipeline
 type: docker

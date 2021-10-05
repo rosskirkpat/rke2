@@ -1,8 +1,13 @@
-FROM rancher/golang:1.16-windowsservercore AS dapper
+ARG SERVERCORE_VERSION
+
+# FROM rancher/golang:1.16-windowsservercore AS dapper
+FROM mcr.microsoft.com/windows/servercore:${SERVERCORE_VERSION} AS dapper
 SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
 ARG DAPPER_HOST_ARCH
 ENV HOST_ARCH=${DAPPER_HOST_ARCH} ARCH=${DAPPER_HOST_ARCH}
+
+RUN New-Item -ItemType SymbolicLink -Target "C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe" -Path "C:\Windows\System32\WindowsPowerShell\v1.0\pwsh.exe"
 
 RUN pushd c:\; \
     $URL = 'https://github.com/StefanScherer/docker-cli-builder/releases/download/20.10.5/docker.exe'; \
@@ -50,7 +55,7 @@ RUN pushd c:\; \
     Write-Host 'Complete.'; \
     popd;
 
-ENV DAPPER_ENV REPO TAG DRONE_TAG
+ENV DAPPER_ENV REPO OS ARCH TAG DRONE_TAG LOCAL_ARTIFACTS DOCKER_USERNAME DOCKER_PASSWORD
 ENV DAPPER_SOURCE /gopath/src/github.com/rosskirkpat/rke2
 ENV DAPPER_OUTPUT ./bin
 ENV DAPPER_DOCKER_SOCKET true

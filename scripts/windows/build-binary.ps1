@@ -1,9 +1,5 @@
 # Requires -Version 5.0
 
-$ErrorActionPreference = 'Stop'
-
-Import-Module -WarningAction Ignore -Name "$PSScriptRoot\utils.psm1"
-
 # param (
 #     [Parameter()]
 #     [String]
@@ -16,7 +12,10 @@ Import-Module -WarningAction Ignore -Name "$PSScriptRoot\utils.psm1"
 #     $Output
 # )
 
-function Build-RKE2 {
+$ErrorActionPreference = 'Stop'
+Import-Module -WarningAction Ignore -Name "$PSScriptRoot\utils.psm1"
+
+function Build-Binary () {
 
     # [CmdletBinding()]
     # param (
@@ -39,8 +38,7 @@ function Build-RKE2 {
         }
     }
 
-    # $env:REVISION="$(git rev-parse HEAD)if($null -ne $(git diff --no-ext-diff --quiet --exit-code)){Write-Output .dirty}"
-    $env:REVISION="($COMMIT)if($DIRTY){Write-Output .dirty}"
+    $env:REVISION="$env:COMMIT$env:DIRTY"
     $env:RELEASE="$env:PROG-$env:OS.$ARCH"
 
     $env:BUILDTAGS="netgo osusergo no_stage static_build sqlite_omit_load_extension"
@@ -52,7 +50,7 @@ function Build-RKE2 {
     -X $env:K3S_PKG/pkg/version.Version=$env:VERSION
     -X $env:RKE2_PKG/pkg/images.DefaultRegistry=$env:REGISTRY
     -X $env:RKE2_PKG/pkg/images.DefaultEtcdImage=rancher/hardened-etcd:$env:ETCD_VERSION-$env:IMAGE_BUILD_VERSION
-    -X $env:RKE2_PKG/pkg/images.DefaultKubernetesImage=${env:REPO}/hardened-kubernetes:$env:KUBERNETES_IMAGE_TAG
+    -X $env:RKE2_PKG/pkg/images.DefaultKubernetesImage=rancher/hardened-kubernetes:$env:KUBERNETES_IMAGE_TAG
     -X $env:RKE2_PKG/pkg/images.DefaultPauseImage=rancher/pause:$env:PAUSE_VERSION
     -X $env:RKE2_PKG/pkg/images.DefaultRuntimeImage=$env:REPO/$env:PROG-runtime:$env:DOCKERIZED_VERSION
     "
@@ -63,11 +61,15 @@ function Build-RKE2 {
     $env:GOOS="windows"; $env:GOARCH="amd64"; go build `
     -tags "$env:GO_BUILDTAGS $env:GO_GCFLAGS $env:GO_BUILD_FLAGS" `
     -o "bin/$env:PROG.exe" `
-    -ldflags "$GO_LDFLAGS $VERSION_FLAGS $env:GO_TAGS"
+    -ldflags "$GO_LDFLAGS $VERSION_FLAGS" `
+    $env:GO_TAGS
     if (-not $?) {
         Log-Fatal "go build failed!"
     }
 }
+
+# function Build-Runtime () {
+# }
 
 Invoke-Script -File "$PSScriptRoot\version.ps1"
 if ($LASTEXITCODE -ne 0) {
@@ -81,5 +83,6 @@ Push-Location $SRC_PATH
 Remove-Item -Path "$SRC_PATH\bin\*" -Force -ErrorAction Ignore
 $null = New-Item -Type Directory -Path bin -ErrorAction Ignore
 # New-Build -Version $env:VERSION -Commit $env:COMMIT -Output "bin\rke2.exe"
-Build-RKE2
+Build-Binary
+# Build-Runtime
 Pop-Location

@@ -1,34 +1,9 @@
-# Requires -Version 5.0
-
-# param (
-#     [Parameter()]
-#     [String]
-#     $Version,
-#     [Parameter()]
-#     [String]
-#     $Commit,
-#     [Parameter()]
-#     [String]
-#     $Output
-# )
+#Requires -Version 5.0
 
 $ErrorActionPreference = 'Stop'
 Import-Module -WarningAction Ignore -Name "$PSScriptRoot\utils.psm1"
 
 function Build-Binary () {
-
-    # [CmdletBinding()]
-    # param (
-    #     [Parameter()]
-    #     [String]
-    #     $Version,
-    #     [Parameter()]
-    #     [String]
-    #     $Commit,
-    #     [Parameter()]
-    #     [String]
-    #     $Output
-    # )
     if ($null -ne $GODEBUG -or $env:GODEBUG) { 
         $env:EXTRA_LDFLAGS="$env:EXTRA_LDFLAGS -s -w"
         $env:DEBUG_GO_GCFLAGS=""
@@ -68,9 +43,6 @@ function Build-Binary () {
     }
 }
 
-# function Build-Runtime () {
-# }
-
 Invoke-Script -File "$PSScriptRoot\version.ps1"
 if ($LASTEXITCODE -ne 0) {
     Log-Fatal "Build failed while running version.ps1"
@@ -82,7 +54,5 @@ Push-Location $SRC_PATH
 
 Remove-Item -Path "$SRC_PATH\bin\*" -Force -ErrorAction Ignore
 $null = New-Item -Type Directory -Path bin -ErrorAction Ignore
-# New-Build -Version $env:VERSION -Commit $env:COMMIT -Output "bin\rke2.exe"
 Build-Binary
-# Build-Runtime
 Pop-Location

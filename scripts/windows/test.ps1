@@ -33,8 +33,8 @@ $env:CC = 'x86_64-w64-mingw32-gcc'
 $env:GOARCH = $env:ARCH
 $env:GOOS = 'windows'
 $env:CGO_ENABLED = 1
-$LINKFLAGS = ('-X github.com/rancher/wins/pkg/defaults.AppVersion={0} -X github.com/rancher/wins/pkg/defaults.AppCommit={1} -linkmode external' -f $env:VERSION, $env:COMMIT)
-ginkgo --ldflags $LINKFLAGS --randomizeAllSpecs --randomizeSuites --noisyPendings=false --noisySkippings=false --cover --coverpkg=github.com/rancher/wins/... --trace --race -r tests/validation/
+$LINKFLAGS = ('-X github.com/rancher/rke2/pkg/defaults.AppVersion={0} -X github.com/rancher/rke2/pkg/defaults.AppCommit={1} -linkmode external' -f $env:VERSION, $env:COMMIT)
+ginkgo --ldflags $LINKFLAGS --randomizeAllSpecs --randomizeSuites --noisyPendings=false --noisySkippings=false --cover --coverpkg=github.com/rancher/rke2/... --trace --race -r tests/validation/
 if (-not $?)
 {
     Log-Fatal "validation test failed"

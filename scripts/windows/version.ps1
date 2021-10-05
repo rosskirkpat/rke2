@@ -85,7 +85,6 @@ function Get-Args {
     }
 }
 
-
 function Set-Environment {
     if (-Not $env:KUBERNETES_VERSION) {
         $env:KUBERNETES_VERSION = "v1.21.3"

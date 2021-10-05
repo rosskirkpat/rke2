@@ -2,6 +2,7 @@ if (!(Test-Path .dapper.exe)) {
     $dapperURL = "https://releases.rancher.com/dapper/latest/dapper-Windows-x86_64.exe"
     Write-Host "no .dapper.exe, downloading $dapperURL"
     curl.exe -sfL -o .dapper.exe $dapperURL
+    dapper.exe -v
 }
 
 if ($args.Count -eq 0) {

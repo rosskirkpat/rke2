@@ -58,6 +58,7 @@ require (
 	github.com/Freman/eventloghook v0.0.0-20191003051739-e4d803b6b48b
 	github.com/Microsoft/hcsshim v0.8.20
 	github.com/containerd/continuity v0.1.0
+	github.com/golang/go v0.0.0-20210809163732-0d02a0d966b6 // indirect
 	github.com/google/go-containerregistry v0.5.0
 	github.com/google/gopacket v1.1.19
 	github.com/iamacarpet/go-win64api v0.0.0-20210311141720-fe38760bed28

@@ -423,10 +423,11 @@ function Get-AirgapChecksums() {
     $archInfo = Get-ArchitectureInfo
     $arch = $archInfo.Arch
 
-    $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst.sha256sum"
+    # $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst.sha256sum"
+    $AirgapChecksumsUrl = "$StorageUrl/rke2-images.windows-$arch-$CommitHash.tar.zst.sha256sum"
     # try for zst first; if that fails use gz for older release branches
     if (!(Test-Download -Url $AirgapChecksumsUrl)) {
-        $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.gz.sha256sum"
+        $AirgapChecksumsUrl = "$StorageUrl/rke2-images.windows-$arch-$CommitHash.tar.gz.sha256sum"
     }
     Write-InfoLog "downloading airgap checksums at $AirgapChecksumsUrl"
     curl.exe -sfL $AirgapChecksumsUrl -o $TempAirgapChecksums
@@ -455,11 +456,11 @@ function Get-AirgapTarball() {
     $archInfo = Get-ArchitectureInfo
     $arch = $archInfo.Arch
 
-    $AirgapTarballUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst"
+    $AirgapTarballUrl = "$StorageUrl/rke2-images.windows-$arch-$CommitHash.tar.zst"
 
     # try for zst first; if that fails use gz for older release branches
     if (!(Test-Download -Url $AirgapTarballUrl)) {
-        $AirgapTarballUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.gz"
+        $AirgapTarballUrl = "$StorageUrl/rke2-images.windows-$arch-$CommitHash.tar.gz"
     }
     Write-InfoLog "downloading airgap tarball at $AirgapTarballUrl"
     curl.exe -sfL $AirgapTarballUrl -o $TempAirgapTarball

@@ -527,7 +527,7 @@ function Get-AirgapChecksums() {
         $StorageUrl,
         [Parameter()]
         [String]
-        $TempAirgapChecksums
+        $TempImageChecksums
     )
     
     if (-Not $CommitHash) {
@@ -541,15 +541,15 @@ function Get-AirgapChecksums() {
     if ($CommitHash) {
         $AirgapChecksumsUrl = "$StorageUrl/rke2-images.$suffix-$CommitHash.tar.zst.sha256sum"
         Write-InfoLog "downloading airgap checksums at $AirgapChecksumsUrl"
-        curl.exe -sfL $AirgapChecksumsUrl -o $TempAirgapChecksums
-        return Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-images.$suffix.tar.zst"
+        curl.exe -sfL $AirgapChecksumsUrl -o $TempImageChecksums
+        return Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
     }
     # prepare for windows airgap image bug fix
     # else {
     #     $AirgapChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
     #     Write-InfoLog "downloading airgap checksums at $AirgapChecksumsUrl"
-    #     curl.exe -sfL $AirgapChecksumsUrl -o $TempAirgapChecksums
-    #     return ${ Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz" ; Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.zst }"
+    #     curl.exe -sfL $AirgapChecksumsUrl -o $TempImageChecksums
+    #     return ${ Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz" ; Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.zst }"
     # }
 }
 
@@ -637,7 +637,7 @@ function Install-AirgapTarball() {
         $ExpectedImageAirGapChecksum,
         [Parameter()]
         [String]
-        $TempAirgapChecksums
+        $TempImageChecksums
     )
 
     if (-Not $CommitHash) {
@@ -728,7 +728,7 @@ switch ($Method) {
             Get-BinaryTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempTarball $TMP_BINARY_TARBALL
         }
         Test-AirgapTarballChecksum -CommitHash $Commit -ExpectedImageAirgapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempAirGapTarball $TMP_AIRGAP_TARBALL
-        Install-AirgapTarball -CommitHash $Commit -InstallAgentImageDir $AgentImagesDir -TempAirgapTarball $TMP_AIRGAP_TARBALL -ExpectedImageAirgapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempAirgapChecksums $TMP_AIRGAP_CHECKSUMS
+        Install-AirgapTarball -CommitHash $Commit -InstallAgentImageDir $AgentImagesDir -TempAirgapTarball $TMP_AIRGAP_TARBALL -ExpectedImageAirgapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
         Test-TarballChecksum -Tarball $TMP_BINARY_TARBALL -ExpectedChecksum $BINARY_CHECKSUM_EXPECTED
         Expand-Tarball -InstallPath $TarPrefix -Tarball $TMP_BINARY_TARBALL
         Write-InfoLog "install complete; you may want to run:  `$env:PATH+=`";$TarPrefix\bin;C:\var\lib\rancher\rke2\bin`""

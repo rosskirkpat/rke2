@@ -2,6 +2,16 @@
 $ErrorActionPreference = 'Stop'
 
 # rke2-runtime variables to pass into the dockerfile
+
+if ($env:REPO) {
+    $REPO = $env:REPO
+}
+else {
+    # set default
+    $REPO = "rancher"
+    $env:REPO = $REPO
+}
+
 $RUNTIME_PATH = $env:RUNTIME_PATH
 if (-not $RUNTIME_PATH) {
     $RUNTIME_PATH = "rancher"

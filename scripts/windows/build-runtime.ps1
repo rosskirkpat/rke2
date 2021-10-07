@@ -1,13 +1,12 @@
 #Requires -Version 5.0
 $ErrorActionPreference = "Stop"
 
-Invoke-Expression -Command "$PSScriptRoot\version.ps1"
+Invoke-Script -File "$PSScriptRoot\version.ps1"
 Invoke-Script -File "$PSScriptRoot\runtime-versions.ps1"
 
-
 $TAG = $env:VERSION
-$REPO = $env:REPO
 $ARCH = $env:ARCH
+$REPO = $env:REPO
 
 if ($env:DIRTY) {
     $TAG = "dev"

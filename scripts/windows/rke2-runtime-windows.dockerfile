@@ -1,7 +1,5 @@
-# ARG SERVERCORE_VERSION
-# FROM mcr.microsoft.com/windows/servercore:${SERVERCORE_VERSION} AS build
-# SHELL ["powershell", "-NoLogo", "-Command", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 FROM mcr.microsoft.com/powershell:lts-nanoserver-1809-20210927 AS windows-runtime
+
 ARG RUNTIME_PATH
 ARG CRICTL_VERSION
 ARG CONTAINERD_VERSION
@@ -36,8 +34,6 @@ RUN curl.exe -sfL -O -R https://github.com/projectcalico/calico/releases/downloa
     Move-Item -Path calico-windows-v3.19.2/CalicoWindows/calico-node.exe -Destination /rancher/calico-node.exe ; \
     Move-Item -Path calico-windows-v3.19.2/CalicoWindows/cni/calico.exe -Destination /rancher/calico.exe ; \
     Move-Item -Path calico-windows-v3.19.2/CalicoWindows/cni/calico-ipam.exe -Destination /rancher/calico-ipam.exe
-
-# RUN curl.exe -sfL -O -R https://github.com/Microsoft/SDN/raw/master/Kubernetes/windows/hns.psm1
 
 RUN curl.exe -sfL -O -R https://github.com/kubernetes-sigs/cri-tools/releases/download/${env:CRICTL_VERSION}/crictl-${env:CRICTL_VERSION}-windows-amd64.tar.gz ; \ 
     tar xzvf crictl-$env:CRICTL_VERSION-windows-amd64.tar.gz -C /rancher/

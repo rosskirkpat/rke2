@@ -423,7 +423,6 @@ function Get-AirgapChecksums() {
     $archInfo = Get-ArchitectureInfo
     $arch = $archInfo.Arch
 
-    # $AirgapChecksumsUrl = "$StorageUrl/rke2-windows-$BuildVersion-$arch-images-$CommitHash.tar.zst.sha256sum"
     $AirgapChecksumsUrl = "$StorageUrl/rke2-images.windows-$arch-$CommitHash.tar.zst.sha256sum"
     # try for zst first; if that fails use gz for older release branches
     if (!(Test-Download -Url $AirgapChecksumsUrl)) {
@@ -431,7 +430,7 @@ function Get-AirgapChecksums() {
     }
     Write-InfoLog "downloading airgap checksums at $AirgapChecksumsUrl"
     curl.exe -sfL $AirgapChecksumsUrl -o $TempAirgapChecksums
-    return Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar"
+    return Find-Checksum -ChecksumFilePath $TempAirgapChecksums -Pattern "rke2-images.windows-$arch-$CommitHash.tar"
 }
 
 # download_airgap_tarball downloads the airgap image tarball.
@@ -531,7 +530,7 @@ function Install-AirgapTarball() {
     New-Item -Path $InstallAgentImageDir -ItemType Directory | Out-null
 
     Write-InfoLog "installing airgap tarball to $InstallAgentImageDir"
-    Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-windows-$BuildVersion-$arch-images.tar.zst" -Force
+    Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-images.windows-$arch-$CommitHash.tar.zst" -Force
 }
 
 # Globals

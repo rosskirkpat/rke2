@@ -187,7 +187,7 @@ function Get-ReleaseVersion() {
 }
 
 # download_checksums downloads hash from github url.
-function Get-Checksums() {
+function Get-BinaryChecksums() {
     [CmdletBinding()]
     param (
         [Parameter()]
@@ -204,7 +204,50 @@ function Get-Checksums() {
         $Rke2GitHubUrl,
         [Parameter()]
         [String]
-        $TempBinaryChecksums,
+        $TempBinaryChecksums
+    )
+
+    $archInfo = Get-ArchitectureInfo
+    $suffix = $archInfo.Suffix
+    $arch = $archInfo.Arch
+    $binaryChecksumsUrl = ""
+
+    if ($CommitHash) {
+        $binaryChecksumsUrl = "$StorageUrl/rke2.$suffix-$CommitHash.tar.gz.sha256sum"
+        Write-Host "downloading binary checksum for commit: $CommitHash at $binaryChecksumsUrl"
+        curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
+
+        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
+
+        return BinaryChecksum = $binaryChecksum
+    }
+    else {
+        $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
+        Write-Host "downloading binary checksum from $binaryChecksumsUrl"
+        Write-Host "TempBinaryChecksums: $TempBinaryChecksums"
+        curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
+
+        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
+
+        return BinaryChecksum = $binaryChecksum
+    }
+}
+
+function Get-ImageChecksums() {
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [String]
+        $CommitHash,
+        [Parameter()]
+        [String]
+        $StorageUrl,
+        [Parameter()]
+        [String]
+        $Rke2Version,
+        [Parameter()]
+        [String]
+        $Rke2GitHubUrl,
         [Parameter()]
         [String]
         $TempImageChecksums
@@ -213,39 +256,27 @@ function Get-Checksums() {
     $archInfo = Get-ArchitectureInfo
     $suffix = $archInfo.Suffix
     $arch = $archInfo.Arch
-    $binaryChecksumsUrl = ""
     $imageChecksumsUrl = ""
 
     if ($CommitHash) {
-        $binaryChecksumsUrl = "$StorageUrl/rke2.$suffix-$CommitHash.tar.gz.sha256sum"
         $imageChecksumsUrl = "$StorageUrl/rke2-images.$suffix-$CommitHash.tar.zst.sha256sum"
-        Write-Host "downloading binary checksum for commit: $CommitHash at $binaryChecksumsUrl"
-        curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
         Write-Host "downloading image checksum for commit: $CommitHash at $imageChecksumsUrl"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
-
-        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
         $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
 
-        return @{ BinaryChecksum = $binaryChecksum; ImageChecksum = $imageChecksum }
+        return ImageChecksum = $imageChecksum 
     }
     else {
-        $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         $imageChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
-        Write-Host "downloading binary checksum from $binaryChecksumsUrl"
-        Write-Host "TempBinaryChecksums: $TempBinaryChecksums"
-        curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
         Write-Host "downloading image checksum from $imageChecksumsUrl"
         Write-Host "TempImageChecksums: $TempImageChecksums"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
-        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
         $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz"
 
-        return @{ BinaryChecksum = $binaryChecksum; ImageChecksum = $imageChecksum }
+        return ImageChecksum = $imageChecksum 
     }
 }
-
 # download_tarball downloads binary from github or CI storage url.
 function Get-BinaryTarball() {
     [CmdletBinding()]
@@ -718,7 +749,7 @@ switch ($Method) {
             Write-InfoLog "using $Version as release"
             Write-InfoLog "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
 
-            $imageChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
+            $imageChecksums = Get-ImageChecksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
 
             Write-Host "imageChecksums: $imageChecksums"
             $AIRGAP_CHECKSUM_EXPECTED = $imageChecksums.ImageChecksum
@@ -727,7 +758,7 @@ switch ($Method) {
 
             Write-Host "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
 
-            $binaryChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempBinaryChecksums $TMP_BINARY_CHECKSUMS
+            $binaryChecksums = Get-BinaryChecksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempBinaryChecksums $TMP_BINARY_CHECKSUMS
             $BINARY_CHECKSUM_EXPECTED = $binaryChecksums.BinaryChecksum
             Get-BinaryTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempTarball $TMP_BINARY_TARBALL
         }

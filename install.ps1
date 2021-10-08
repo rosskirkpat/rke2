@@ -230,7 +230,6 @@ function Get-BinaryChecksums() {
     else {
         $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         Write-Host "downloading binary checksum from $binaryChecksumsUrl"
-        Write-Host "TempBinaryChecksums: $TempBinaryChecksums"
         curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
 
         return Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
@@ -274,7 +273,6 @@ function Get-ImageChecksums() {
     else {
         $imageChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         Write-Host "downloading image checksum from $imageChecksumsUrl"
-        Write-Host "TempImageChecksums: $TempImageChecksums"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
         return Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz"
@@ -654,9 +652,9 @@ function Install-AirgapTarball() {
         New-Item -Path $InstallAgentImageDir -ItemType Directory | Out-null
         Write-InfoLog "installing airgap tarball to $InstallAgentImageDir"
         if ([IO.Path]::GetExtension($TempAirgapTarball) -eq ".zst") {
-        Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-windows-$BuildVersion-$arch-images.tar.zst" -Force
+            Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-windows-$BuildVersion-$arch-images.tar.zst" -Force
         }
-        elseif ([IO.Path]::GetExtension($TempAirgapTarball) -eq ".gz")  {
+        elseif ([IO.Path]::GetExtension($TempAirgapTarball) -eq ".gz") {
             Move-Item -Path $TempAirgapTarball -Destination "$InstallAgentImageDir/rke2-windows-$BuildVersion-$arch-images.tar.gz" -Force
         }
     }
@@ -716,15 +714,8 @@ switch ($Method) {
             $Version = Get-ReleaseVersion
             Write-InfoLog "using $Version as release"
             Write-InfoLog "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
-
             $AIRGAP_CHECKSUM_EXPECTED = Get-ImageChecksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
-
-            Write-Host "imageChecksums: $AIRGAP_CHECKSUM_EXPECTED"
             Get-AirgapTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -TempAirgapTarball $TMP_AIRGAP_TARBALL
-
-
-            Write-Host "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
-
             $BINARY_CHECKSUM_EXPECTED = Get-BinaryChecksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempBinaryChecksums $TMP_BINARY_CHECKSUMS
             Get-BinaryTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempTarball $TMP_BINARY_TARBALL
         }

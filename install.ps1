@@ -233,8 +233,10 @@ function Get-Checksums() {
         $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         $imageChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         Write-Host "downloading binary checksum from $binaryChecksumsUrl"
+        Write-Debug "TempBinaryChecksums: $TempBinaryChecksums"
         curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
         Write-Host "downloading image checksum from $imageChecksumsUrl"
+        Write-Debug "TempImageChecksums: $TempImageChecksums"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
         $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"

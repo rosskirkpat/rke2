@@ -87,11 +87,15 @@ function Write-WarnLog() {
     Write-Output "[WARN] $($args -join " ")"
 }
 
+function Write-DebugLog() {
+    Write-Output "[DEBUG] $($args -join " ")"
+}
+
 # fatal logs the given argument at fatal log level.
 function Write-FatalLog() {
     Write-Output "[ERROR] $($args -join " ")"
-    if ([string]::IsNullOrEmpty($SUFFIX)) {
-        Write-Output "[ALT] Please visit 'https://github.com/rancher/rke2/releases' directly and download the latest rke2.$SUFFIX.tar.gz"
+    if ([string]::IsNullOrEmpty($suffix)) {
+        Write-Output "[ALT] Please visit 'https://github.com/rancher/rke2/releases' directly and download the latest rke2.$suffix.tar.gz"
     }
     exit 1
 }

@@ -724,6 +724,9 @@ switch ($Method) {
         }
         New-Item -Path $temp -Name rke2-install -ItemType Directory | Out-Null
 
+        $archInfo = Get-ArchitectureInfo
+        $suffix = $archInfo.Suffix    
+        $arch = $archInfo.Arch
         $BuildVersion = Get-BuildVersion        
         $TMP_DIR = Join-Path -Path $temp -ChildPath "rke2-install"
         $TMP_BINARY_CHECKSUMS = Join-Path -Path $TMP_DIR -ChildPath "rke2.checksums"

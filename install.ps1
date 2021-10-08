@@ -233,10 +233,10 @@ function Get-Checksums() {
         $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         $imageChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
         Write-Host "downloading binary checksum from $binaryChecksumsUrl"
-        Write-Debug "TempBinaryChecksums: $TempBinaryChecksums"
+        Write-Host "TempBinaryChecksums: $TempBinaryChecksums"
         curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
         Write-Host "downloading image checksum from $imageChecksumsUrl"
-        Write-Debug "TempImageChecksums: $TempImageChecksums"
+        Write-Host "TempImageChecksums: $TempImageChecksums"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
         $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
@@ -720,7 +720,7 @@ switch ($Method) {
 
             $imageChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
 
-            Write-Debug "imageChecksums: $imageChecksums"
+            Write-Host "imageChecksums: $imageChecksums"
             $AIRGAP_CHECKSUM_EXPECTED = $imageChecksums.ImageChecksum
             Get-AirgapTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -TempAirgapTarball $TMP_AIRGAP_TARBALL
 

@@ -166,11 +166,14 @@ function Get-BuildVersion() {
     if ("$BuildVersion" -eq "2009") {
         $BuildVersion = "20H2"
     }
-    if ("$BuildVersion" -ne "1809" -or "2022" -or "2004" -or "20H2") {
+    if ("$BuildVersion" -eq "1809" -or "2022" -or "2004" -or "20H2") {
+        Write-InfoLog "build version: $BuildVersion"
+        return $BuildVersion
+    }
+    else {
         Write-FatalLog "unsupported build version $BuildVersion"
         exit 1
     }
-    return $BuildVersion
 }
 
 # --- use desired rke2 version if defined or find version from channel ---

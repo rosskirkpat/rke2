@@ -705,7 +705,6 @@ $INSTALL_RKE2_GITHUB_URL = "https://github.com/rancher/rke2"
 Confirm-WindowsFeatures -RequiredFeatures @("Containers")
 Set-Environment 
 Test-MethodConflict
-Get-BuildVersion
 
 switch ($Method) {
     "tar" { 
@@ -720,7 +719,8 @@ switch ($Method) {
             Remove-Item -Path "$temp/rke2-install" -Force -Recurse
         }
         New-Item -Path $temp -Name rke2-install -ItemType Directory | Out-Null
-        
+
+        $BuildVersion = Get-BuildVersion        
         $TMP_DIR = Join-Path -Path $temp -ChildPath "rke2-install"
         $TMP_BINARY_CHECKSUMS = Join-Path -Path $TMP_DIR -ChildPath "rke2.checksums"
         $TMP_BINARY_TARBALL = Join-Path -Path $TMP_DIR -ChildPath "rke2.tarball"

@@ -230,8 +230,8 @@ function Get-Checksums() {
         Write-Host "downloading image checksum for commit: $CommitHash at $imageChecksumsUrl"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
-        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
-        $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
+        $binaryChecksum = Find-Checksum -Path $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
+        $imageChecksum = Find-Checksum -Path $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
 
         return @{ BinaryChecksum = $binaryChecksum; ImageChecksum = $imageChecksum }
     }
@@ -243,8 +243,8 @@ function Get-Checksums() {
         Write-Host "downloading image checksum from $imageChecksumsUrl"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
 
-        $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
-        $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
+        $binaryChecksum = Find-Checksum -Path $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
+        $imageChecksum = Find-Checksum -Path $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz"
 
         return @{ BinaryChecksum = $binaryChecksum; ImageChecksum = $imageChecksum }
     }
@@ -583,11 +583,11 @@ function Get-AirgapTarball() {
         curl.exe -sfL $AirgapTarballUrl -o $TempAirgapTarball
     }
     # prepare for windows airgap image bug fix
-    # else {
-    #     $AirgapTarballUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/rke2-windows-$BuildVersion-$arch-images.tar.gz"
-    #     Write-InfoLog "downloading airgap tarball with from $AirgapTarballUrl"
-    #     curl.exe -sfL $AirgapTarballUrl -o $TempAirgapTarball
-    # }
+    else {
+        $AirgapTarballUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/rke2-windows-$BuildVersion-$arch-images.tar.gz"
+        Write-InfoLog "downloading airgap tarball from $AirgapTarballUrl"
+        curl.exe -sfL $AirgapTarballUrl -o $TempAirgapTarball
+    }
 }
 
 # verify_airgap_tarball compares the airgap image tarball checksum to the value
@@ -720,12 +720,15 @@ switch ($Method) {
         else {
             $Version = Get-ReleaseVersion
             Write-InfoLog "using $Version as release"
-            $binaryChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempBinaryChecksums $TMP_BINARY_CHECKSUMS
+
             $imageChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
-            $BINARY_CHECKSUM_EXPECTED = $binaryChecksums.BinaryChecksum
             $AIRGAP_CHECKSUM_EXPECTED = $imageChecksums.ImageChecksum
-            Write-Host "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
             Get-AirgapTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -TempAirgapTarball $TMP_AIRGAP_TARBALL
+
+            Write-Host "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
+
+            $binaryChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempBinaryChecksums $TMP_BINARY_CHECKSUMS
+            $BINARY_CHECKSUM_EXPECTED = $binaryChecksums.BinaryChecksum
             Get-BinaryTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempTarball $TMP_BINARY_TARBALL
         }
         Test-AirgapTarballChecksum -CommitHash $Commit -ExpectedImageAirgapChecksum $AIRGAP_CHECKSUM_EXPECTED -TempAirGapTarball $TMP_AIRGAP_TARBALL

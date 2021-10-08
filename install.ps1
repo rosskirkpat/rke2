@@ -226,7 +226,7 @@ function Get-BinaryChecksums() {
 
         $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
 
-        return BinaryChecksum = $binaryChecksum
+        # return BinaryChecksum = $binaryChecksum
     }
     else {
         $binaryChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
@@ -235,9 +235,8 @@ function Get-BinaryChecksums() {
         curl.exe -sfL $binaryChecksumsUrl -o $TempBinaryChecksums
 
         $binaryChecksum = Find-Checksum -ChecksumFilePath $TempBinaryChecksums -Pattern "rke2.$suffix.tar.gz"
-
-        return BinaryChecksum = $binaryChecksum
     }
+    return BinaryChecksum = $binaryChecksum
 }
 
 function Get-ImageChecksums() {
@@ -270,8 +269,7 @@ function Get-ImageChecksums() {
         Write-Host "downloading image checksum for commit: $CommitHash at $imageChecksumsUrl"
         curl.exe -sfL $imageChecksumsUrl -o $TempImageChecksums
         $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
-
-        return ImageChecksum = $imageChecksum 
+        # return $imageChecksum 
     }
     else {
         $imageChecksumsUrl = "$Rke2GitHubUrl/releases/download/$Rke2Version/sha256sum-$arch.txt"
@@ -281,8 +279,9 @@ function Get-ImageChecksums() {
 
         $imageChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-windows-$BuildVersion-$arch-images.tar.gz"
 
-        return ImageChecksum = $imageChecksum 
+        # return ImageChecksum = $imageChecksum 
     }
+    return ImageChecksum = $imageChecksum 
 }
 # download_tarball downloads binary from github or CI storage url.
 function Get-BinaryTarball() {

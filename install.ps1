@@ -705,6 +705,7 @@ $INSTALL_RKE2_GITHUB_URL = "https://github.com/rancher/rke2"
 Confirm-WindowsFeatures -RequiredFeatures @("Containers")
 Set-Environment 
 Test-MethodConflict
+Get-BuildVersion
 
 switch ($Method) {
     "tar" { 
@@ -724,7 +725,7 @@ switch ($Method) {
         $TMP_BINARY_CHECKSUMS = Join-Path -Path $TMP_DIR -ChildPath "rke2.checksums"
         $TMP_BINARY_TARBALL = Join-Path -Path $TMP_DIR -ChildPath "rke2.tarball"
         $TMP_AIRGAP_CHECKSUMS = Join-Path -Path $TMP_DIR -ChildPath "rke2-images.checksums"
-        $TMP_AIRGAP_TARBALL = Join-Path -Path $TMP_DIR -ChildPath "rke2-images.tarball"	
+        $TMP_AIRGAP_TARBALL = Join-Path -Path $TMP_DIR -ChildPath "rke2-images.tarball"
 
         if ($ArtifactPath) {
             if ($Commit) {

@@ -714,11 +714,11 @@ switch ($Method) {
         else {
             $Version = Get-ReleaseVersion
             Write-InfoLog "using $Version as release"
-            Write-Host "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
+            Write-InfoLog "Version: $Version `r`nStorage URL: $STORAGE_URL `r`nGithub URL: $INSTALL_RKE2_GITHUB_URL `r`nBinary Checksums: $TMP_BINARY_CHECKSUMS `r`nImage Checksums: $TMP_AIRGAP_CHECKSUMS"
 
-            # $imageChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
-            $imageChecksums = Get-Checksums -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
+            $imageChecksums = Get-Checksums -CommitHash $Commit -StorageUrl $STORAGE_URL -Rke2Version $Version -Rke2GitHubUrl $INSTALL_RKE2_GITHUB_URL -TempImageChecksums $TMP_AIRGAP_CHECKSUMS
 
+            Write-Debug "imageChecksums: $imageChecksums"
             $AIRGAP_CHECKSUM_EXPECTED = $imageChecksums.ImageChecksum
             Get-AirgapTarball -CommitHash $Commit -StorageUrl $STORAGE_URL -TempAirgapTarball $TMP_AIRGAP_TARBALL
 

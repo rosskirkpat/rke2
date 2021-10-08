@@ -355,7 +355,8 @@ function Copy-LocalImageChecksums() {
             $expectedImageAirgapChecksum = Find-Checksum -ChecksumFilePath $TempImageChecksums -Pattern "rke2-images.$suffix.tar.zst"
             return @{ ExpectedImageChecksum = $expectedImageChecksum ; ExpectedImageAirgapChecksum = $expectedImageAirgapChecksum }
         }
-    } 
+    }
+    # need to add a condition where commithash is not set and no local checksums are present 
     else {
         if (Test-Path -Path "$Path/rke2-windows-$BuildVersion-$arch-images.tar.gz" -PathType Leaf) {
             $expectedImageAirgapChecksum = ""

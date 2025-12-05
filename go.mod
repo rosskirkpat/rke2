@@ -73,9 +73,9 @@ require (
 	github.com/rancher/wharfie v0.5.2
 	github.com/rancher/wins v0.1.1
 	github.com/rancher/wrangler v0.8.10
-	github.com/sirupsen/logrus v1.8.1
+	github.com/sirupsen/logrus v1.8.3
 	github.com/urfave/cli v1.22.5
-	golang.org/x/sys v0.0.0-20220114195835-da31bd327af9
+	golang.org/x/sys v0.0.0-20220715151400-c0bba94af5f8
 	google.golang.org/grpc v1.44.0
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
